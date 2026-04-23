@@ -11,6 +11,13 @@
 
 本仓库已经去掉测试链路和阶段性验证资产，只保留正式运行所需代码与资源。
 
+## 开源发布说明
+
+- 本仓库按“自包含部署仓库”方式组织，`deploy_assets/` 和 `models/` 会随仓库一起发布，当前仓库体积约 `204 MB`，首次 clone 会相对较慢。
+- 以下运行时目录和产物不纳入版本控制：`gallery/`、`video/input/`、`video/output/`、`outputs/face_alarm_images/`、`logs/`、`tmp/`、`temp/`，以及运行过程中生成的人脸库数据库、快照、日志和临时文件。
+- 根目录 `LICENSE` 只覆盖本项目自有代码；随仓库分发的第三方二进制、wheel、运行时库和模型文件，仍分别受其上游许可证或分发条款约束。
+- 第三方资源来源、许可证和发布前核验项见 `THIRD_PARTY_NOTICES.md`。如果其中某项的再分发权限还没有确认，请在公开发布前将对应文件移出仓库，并改为文档化下载步骤。
+
 ## 项目能力
 
 - 单路实时视频推理：适配 RK3588 + RKNN Runtime 的正式运行链路
@@ -52,6 +59,8 @@
 - `video/output/`：本地视频输出目录
 - `outputs/face_alarm_images/`：告警快照默认目录
 
+上述目录已在 `.gitignore` 中排除，建议仅作为本地运行数据目录使用。
+
 ## 运行环境
 
 生产环境建议：
@@ -69,6 +78,8 @@
 - `deploy_assets/linux_arm64/python_wheels/`
 - `deploy_assets/linux_arm64/mediamtx/`
 - `deploy_assets/linux_arm64/ffmpeg/`
+
+第三方资源的许可证边界和发布前核验项见 `THIRD_PARTY_NOTICES.md`。
 
 ## 快速开始
 

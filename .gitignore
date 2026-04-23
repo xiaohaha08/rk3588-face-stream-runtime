@@ -5,6 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
+!deploy_assets/linux_arm64/rknn_runtime/
+!deploy_assets/linux_arm64/rknn_runtime/librknnrt.so
 
 # Distribution / packaging
 .Python
@@ -179,3 +181,26 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Runtime data and local outputs
+gallery/
+video/input/
+video/output/
+outputs/face_alarm_images/
+logs/
+tmp/
+temp/
+
+# Local databases and journaling files
+face_library.db
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+
+# Local temporary files
+*.tmp
+*.temp
