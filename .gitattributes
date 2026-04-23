@@ -1,2 +1,15 @@
-# Auto detect text files and perform LF normalization
+# Normalize text files in the repository and keep common source/docs on LF.
 * text=auto
+
+.gitattributes text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.txt text eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
