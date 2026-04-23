@@ -1,0 +1,115 @@
+{
+  "source_id": "usb-face-rtsp-01",
+  "input": {
+    "kind": "usb_camera",
+    "device": "0",
+    "backend": "v4l2",
+    "width": 640,
+    "height": 480,
+    "fps": 30,
+    "max_frames": 0,
+    "buffer_size": 1,
+    "drop_initial_frames": 5,
+    "convert_to_rgb": true
+  },
+  "frame_store": {
+    "capacity": 64
+  },
+  "scheduler": {
+    "poll_interval_ms": 2
+  },
+  "workers": {
+    "count": 3,
+    "task_timeout_ms": 220,
+    "result_queue_size": 16
+  },
+  "reorder": {
+    "max_wait_ms": 140
+  },
+  "models": {
+    "detector": "models/rk-yolov8n-face-to-rk3588-640x640.rknn",
+    "classifier": "models/ResNet_6face_model_210.onnx-to-rk3588-224x224.rknn",
+    "recognizer": "models/XcFaceNet20241110-to-rk3588-160x160.rknn"
+  },
+  "detector": {
+    "input_size": 640,
+    "obj_thresh": 0.25,
+    "nms_thresh": 0.45
+  },
+  "classifier": {
+    "input_size": 224,
+    "crop_scale": 1.08,
+    "center_shift_y": -0.03,
+    "use_face_crop_direct_resize": false,
+    "softmax": true,
+    "preprocess": "raw_uint8",
+    "input_color": "rgb",
+    "input_scale": 1.0,
+    "mean": [123.675, 116.28, 103.53],
+    "std": [58.395, 57.12, 57.375],
+    "labels": ["low", "verylow", "middle", "verymiddle", "high", "veryhigh"]
+  },
+  "recognizer": {
+    "input_size": 160,
+    "crop_margin": 0.15,
+    "unknown_label": "unknown",
+    "preprocess": "raw_uint8",
+    "input_color": "rgb",
+    "input_scale": 1.0,
+    "mean": [127.5, 127.5, 127.5],
+    "std": [127.5, 127.5, 127.5],
+    "recognition_quality_labels": ["middle", "verymiddle", "high", "veryhigh"],
+    "match_threshold": 0.45
+  },
+  "gallery": {
+    "directory": "gallery",
+    "max_images_per_identity": 10
+  },
+  "tracking": {
+    "iou_threshold": 0.35,
+    "ttl_frames": 20,
+    "recognition_cooldown_frames": 6,
+    "recognizer_core_id": 2,
+    "recognition_queue_size": 8
+  },
+  "output": {
+    "push_queue_size": 8,
+    "sink": "ffmpeg_rtsp",
+    "annotate_failures": true,
+    "stream_url": "rtsp://127.0.0.1:8554/live/usb-face-recog",
+    "ffmpeg_path": "ffmpeg",
+    "fps": 30,
+    "video_encoder": "h264_rkmpp",
+    "video_bitrate": "4M",
+    "gop": 30,
+    "rtsp_transport": "tcp",
+    "ffmpeg_log_level": "warning",
+    "x264_preset": "ultrafast"
+  },
+  "metrics": {
+    "window_seconds": 5.0,
+    "log_interval_ms": 1000
+  },
+  "mediamtx": {
+    "enabled": true,
+    "auto_start": true,
+    "binary_path": "deploy_assets/linux_arm64/mediamtx/mediamtx",
+    "config_path": "deploy_assets/linux_arm64/mediamtx/mediamtx.yml",
+    "host": "127.0.0.1",
+    "port": 8554,
+    "start_timeout_ms": 5000,
+    "retry_interval_ms": 200
+  },
+  "logging": {
+    "level": "INFO"
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false,
+    "auto_start": true,
+    "enable_websocket": true,
+    "event_buffer_size": 256,
+    "recent_event_limit": 100
+  }
+}

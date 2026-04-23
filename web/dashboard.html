@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RK3588 视频推理控制台</title>
+  <link rel="stylesheet" href="/assets/dashboard.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="top-strip">
+        <div class="top-item"><span>CPU</span><strong id="system-cpu-usage">--</strong></div>
+        <div class="top-item"><span>内存占用</span><strong id="system-memory-usage">--</strong></div>
+        <div class="top-item"><span>CPU 温度</span><strong id="system-cpu-temp">--</strong></div>
+        <div class="top-item"><span>NPU 温度</span><strong id="system-npu-temp">--</strong></div>
+        <div class="top-item"><span>内存用量</span><strong id="system-memory-amount">--</strong></div>
+        <div class="top-item top-runtime">
+          <span>运行状态</span>
+          <div class="badge-row">
+            <span class="status-dot" id="runtime-dot"></span>
+            <strong class="status-text" id="runtime-text">waiting</strong>
+          </div>
+        </div>
+        <div class="top-item"><span>实时通道</span><strong class="connection-value" id="realtime-mode">waiting</strong></div>
+      </div>
+    </header>
+
+    <main class="workspace-grid">
+      <aside class="left-sidebar">
+        <section class="card control-card">
+          <div class="card-head"><h2>配置与控制</h2></div>
+          <div class="control-stack">
+            <label class="control-item">
+              <span>模式预设</span>
+              <select id="config-preset"></select>
+            </label>
+
+            <div class="preset-summary">
+              <span class="preset-category" id="preset-category">模式</span>
+              <strong class="preset-title" id="preset-title">等待选择</strong>
+              <p class="preset-description" id="preset-description">请选择你要运行的模式。</p>
+            </div>
+
+            <label class="control-item">
+              <span>配置文件路径</span>
+              <input id="config-path" type="text" placeholder="runtime config path">
+            </label>
+
+            <div class="control-item local-start-panel" id="local-start-panel">
+              <span>本地视频输入</span>
+              <strong id="local-selected-input">未选择</strong>
+              <div class="hint-text small-hint">本地视频模式启动时会使用这里选中的 input 文件。</div>
+            </div>
+
+            <div class="control-item alarm-toggle-panel">
+              <span>报警开关</span>
+              <strong id="alarm-toggle-status">--</strong>
+              <button class="btn btn-secondary" id="btn-alarm-toggle" type="button">切换报警</button>
+            </div>
+
+            <div class="control-item alarm-toggle-panel">
+              <span>人脸识别开关</span>
+              <strong id="face-recognition-toggle-status">--</strong>
+              <button class="btn btn-secondary" id="btn-face-recognition-toggle" type="button">切换识别</button>
+            </div>
+
+            <div class="button-stack">
+              <button class="btn btn-primary" id="btn-start" type="button">启动 Runtime</button>
+              <button class="btn btn-danger" id="btn-stop" type="button">停止 Runtime</button>
+              <button class="btn btn-secondary" id="btn-refresh" type="button">刷新状态</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card compact-card">
+          <div class="card-head"><h2>实时指标</h2></div>
+          <div class="metric-grid compact-metrics">
+            <div class="metric"><span>Capture</span><strong id="metric-capture-fps">0.0</strong></div>
+            <div class="metric"><span>Dispatch</span><strong id="metric-dispatch-fps">0.0</strong></div>
+            <div class="metric"><span>Output</span><strong id="metric-output-fps">0.0</strong></div>
+            <div class="metric"><span>Worker</span><strong id="metric-worker-ms">0 ms</strong></div>
+            <div class="metric"><span>E2E</span><strong id="metric-e2e-ms">0 ms</strong></div>
+            <div class="metric"><span>Drop</span><strong id="metric-drop-rate">0%</strong></div>
+            <div class="metric"><span>Rec Submit</span><strong id="metric-rec-submit">0</strong></div>
+            <div class="metric"><span>Rec Match</span><strong id="metric-rec-match">0</strong></div>
+          </div>
+        </section>
+
+        <section class="card compact-card">
+          <div class="card-head"><h2>服务状态</h2></div>
+          <div class="service-list compact-list">
+            <div class="service-item"><span>mediamtx</span><strong id="service-mediamtx">-</strong></div>
+            <div class="service-item"><span>mediamtx 地址</span><strong id="service-mediamtx-host">-</strong></div>
+            <div class="service-item"><span>WebSocket</span><strong id="service-websocket">-</strong></div>
+            <div class="service-item"><span>SSE</span><strong id="service-sse">available</strong></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="content-stage">
+        <section class="card stage-card">
+          <div class="stage-head">
+            <h2>内容面板</h2>
+            <div class="stage-tabs" role="tablist" aria-label="内容面板切换">
+              <button class="stage-tab active" id="tab-preview" data-view="preview" type="button">实时预览</button>
+              <button class="stage-tab" id="tab-debug" data-view="debug" type="button">Debug</button>
+              <button class="stage-tab" id="tab-camera" data-view="camera" type="button">摄像头信息</button>
+              <button class="stage-tab" id="tab-local-videos" data-view="local-videos" type="button">本地视频</button>
+              <button class="stage-tab" id="tab-streams" data-view="streams" type="button">流地址</button>
+              <button class="stage-tab" id="tab-alarms" data-view="alarms" type="button">报警信息</button>
+              <button class="stage-tab" id="tab-inspector" data-view="inspector" type="button">人脸库管理</button>
+            </div>
+          </div>
+
+          <section class="stage-view active" id="view-preview">
+            <div class="preview-frame">
+              <iframe id="stream-frame" title="stream preview"></iframe>
+              <video id="stream-video" controls muted autoplay playsinline></video>
+              <div class="preview-overlay" id="preview-overlay">等待视频内容</div>
+            </div>
+            <div class="hint-text" id="preview-hint"></div>
+          </section>
+
+          <section class="stage-view" id="view-debug">
+            <div class="debug-layout">
+              <section class="subcard">
+                <div class="card-head compact-head">
+                  <h3>Debug 概览</h3>
+                  <p>把主链耗时、系统负载和队列状态放在一起，便于快速判断瓶颈。</p>
+                </div>
+                <div class="debug-summary-grid" id="debug-summary-grid"></div>
+              </section>
+
+              <section class="subcard">
+                <div class="card-head compact-head">
+                  <h3>主链阶段</h3>
+                  <p>优先看这组时间，判断当前卡在采集、等待 worker、推理、输出准备还是推流。</p>
+                </div>
+                <div class="debug-stage-list" id="debug-main-stage-list"></div>
+              </section>
+
+              <div class="debug-detail-grid">
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>Worker 细分</h3>
+                    <p>进一步拆出 detector 和 classifier 的耗时。</p>
+                  </div>
+                  <div class="debug-stage-list" id="debug-worker-stage-list"></div>
+                </section>
+
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>输出细分</h3>
+                    <p>查看识别融合、叠框和报警处理在输出阶段各占多少时间。</p>
+                  </div>
+                  <div class="debug-stage-list" id="debug-output-stage-list"></div>
+                </section>
+              </div>
+
+              <div class="debug-detail-grid">
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>识别 Sidecar</h3>
+                    <p>这部分不阻塞主输出，但可以帮助判断 sidecar 是否偏慢。</p>
+                  </div>
+                  <div class="debug-stage-list" id="debug-sidecar-stage-list"></div>
+                </section>
+
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>队列与丢帧</h3>
+                    <p>结合队列深度、高水位和丢帧原因，判断回压发生在哪里。</p>
+                  </div>
+                  <div class="debug-queue-grid" id="debug-queue-grid"></div>
+                  <div class="json-panel" id="debug-drop-panel">waiting for metrics</div>
+                </section>
+              </div>
+
+              <div class="debug-detail-grid">
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>最近整帧链路</h3>
+                    <p>展示最近一帧完整链路的分段耗时快照。</p>
+                  </div>
+                  <div class="json-panel" id="debug-last-pipeline">waiting for frame timing</div>
+                </section>
+
+                <section class="subcard">
+                  <div class="card-head compact-head">
+                    <h3>板端负载</h3>
+                    <p>结合 CPU / NPU / 温度信息判断是否是资源或降频问题。</p>
+                  </div>
+                  <div class="json-panel" id="debug-system-panel">waiting for system snapshot</div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="stage-view" id="view-camera">
+            <div class="camera-info-shell">
+              <section class="subcard">
+                <div class="card-head compact-head">
+                  <h3>摄像头输入信息</h3>
+                  <p>显示摄像头上报参数和运行时实测帧率，用于判断输入源是否符合预期。</p>
+                </div>
+                <div class="camera-info-grid" id="camera-info-grid"></div>
+              </section>
+
+              <section class="subcard">
+                <div class="card-head compact-head">
+                  <h3>输出帧率策略</h3>
+                  <p>输出帧率跟随有效输入帧率，最高限制为 30 帧/秒；输入更快时会丢弃多余旧帧，避免延迟堆积。</p>
+                </div>
+                <div class="camera-policy-grid" id="camera-policy-grid"></div>
+                <div class="json-panel" id="camera-info-json">等待摄像头信息</div>
+              </section>
+            </div>
+          </section>
+
+          <section class="stage-view" id="view-local-videos">
+            <div class="local-video-shell">
+              <div class="local-video-summary compact-summary" id="local-video-summary">等待本地视频目录信息</div>
+              <div class="local-video-layout">
+                <div class="local-video-sidebars">
+                  <section class="subcard local-list-card">
+                    <div class="card-head compact-head"><h3>input 文件夹</h3></div>
+                    <div class="local-video-upload-panel">
+                      <label class="local-video-upload-label" for="local-video-upload-file">上传视频到板子 input</label>
+                      <input id="local-video-upload-file" type="file" accept="video/*,.mp4,.mkv,.mov,.avi,.ts,.m4v,.webm">
+                      <div class="local-video-upload-actions">
+                        <button class="btn btn-primary mini-btn" id="btn-local-video-upload" type="button">上传到板子</button>
+                        <span id="local-video-upload-status">支持 mp4 / mkv / mov / avi / ts / m4v / webm</span>
+                      </div>
+                    </div>
+                    <div class="video-file-list" id="local-input-list">正在加载 input 视频列表</div>
+                  </section>
+                  <section class="subcard local-list-card">
+                    <div class="card-head compact-head"><h3>output 文件夹</h3></div>
+                    <div class="video-file-list" id="local-output-list">正在加载 output 视频列表</div>
+                  </section>
+                </div>
+                <section class="subcard local-player-card">
+                  <div class="card-head compact-head local-player-head">
+                    <div>
+                      <h3>本地视频预览</h3>
+                      <p id="local-player-title">未选择视频</p>
+                    </div>
+                  </div>
+                  <video class="local-player" id="local-video-player" controls playsinline></video>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="stage-view" id="view-streams">
+            <div class="stream-grid">
+              <a class="stream-link" id="rtsp-link" href="#" target="_blank" rel="noreferrer">RTSP</a>
+              <a class="stream-link" id="hls-link" href="#" target="_blank" rel="noreferrer">HLS</a>
+              <a class="stream-link" id="webrtc-link" href="#" target="_blank" rel="noreferrer">WebRTC</a>
+              <a class="stream-link" id="rtmp-link" href="#" target="_blank" rel="noreferrer">RTMP</a>
+            </div>
+            <div class="json-panel large-panel" id="stream-summary">waiting for stream URL</div>
+          </section>
+
+          <section class="stage-view" id="view-alarms">
+            <div class="face-lib-toolbar" style="margin-bottom: 12px;">
+              <button class="btn btn-danger" id="btn-alarm-delete-all" type="button">全部删除报警</button>
+            </div>
+            <div class="alarm-list" id="alarm-list">
+              <div class="event-item">
+                <div class="event-topic">No alarms</div>
+                <div class="event-meta">Waiting for recognized target faces</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="stage-view" id="view-inspector">
+            <div class="inspector-grid">
+              <section class="subcard result-panel">
+                <div class="card-head">
+                  <h3>人脸库管理</h3>
+                  <p id="face-lib-paths">数据库：--</p>
+                </div>
+                <div class="control-stack">
+                  <label class="control-item">
+                    <span>搜索</span>
+                    <input id="face-lib-search" type="text" placeholder="输入姓名或备注关键词">
+                  </label>
+                  <div class="face-lib-toolbar">
+                    <button class="btn btn-primary" id="face-lib-create" type="button">新增</button>
+                    <button class="btn btn-secondary" id="face-lib-edit" type="button">修改</button>
+                    <button class="btn btn-secondary" id="face-lib-refresh" type="button">查询</button>
+                    <button class="btn btn-danger" id="face-lib-delete-all" type="button">全部删除</button>
+                    <button class="btn btn-secondary" id="face-lib-guide" type="button">使用说明</button>
+                  </div>
+                  <div class="face-lib-board" id="face-lib-identity-list">当前版本未加载身份数据</div>
+                </div>
+                <div class="card-head" style="margin-top: 12px;">
+                  <h3 id="face-lib-selected-title">当前选中身份：-</h3>
+                </div>
+                <div class="control-stack">
+                  <div class="control-item face-lib-sample-bar">
+                    <span>当前身份样本</span>
+                    <input id="face-lib-sample-file" type="file" accept="image/*">
+                    <div class="inline-actions">
+                      <button class="btn btn-primary" id="face-lib-upload" type="button">添加样本</button>
+                      <button class="btn btn-secondary" id="face-lib-reload-runtime" type="button">重载识别运行时</button>
+                    </div>
+                  </div>
+                  <div class="face-lib-sample-board" id="face-lib-sample-list">当前版本未加载样本数据</div>
+                </div>
+              </section>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="face-lib-dialog" id="face-lib-form-dialog">
+    <form class="face-lib-dialog-form" id="face-lib-form" method="dialog">
+      <div class="card-head">
+        <h3 id="face-lib-dialog-title">人脸库操作</h3>
+        <p id="face-lib-dialog-desc">此版本暂未改动原有人脸库编辑流程。</p>
+      </div>
+      <label class="control-item">
+        <span>姓名</span>
+        <input id="face-lib-dialog-name" type="text" placeholder="请输入姓名">
+      </label>
+      <label class="control-item">
+        <span>备注</span>
+        <input id="face-lib-dialog-note" type="text" placeholder="请输入备注">
+      </label>
+      <label class="control-item">
+        <span>样本图片</span>
+        <input id="face-lib-dialog-file" type="file" accept="image/*">
+      </label>
+      <div class="face-lib-dialog-actions">
+        <button class="btn btn-primary" id="face-lib-dialog-confirm" type="submit" value="confirm">确认</button>
+        <button class="btn btn-secondary" id="face-lib-dialog-cancel" type="button">取消</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="face-lib-dialog" id="face-lib-guide-dialog">
+    <div class="face-lib-dialog-form">
+      <div class="card-head">
+        <h3>人脸库使用方法</h3>
+        <p>当前任务主要调整视频模式，人脸库功能保持原接口。</p>
+      </div>
+      <div class="face-lib-guide-text" id="face-lib-guide-text">
+        如需继续管理身份与样本，请使用已有接口；本次改动重点是 4 个视频模式、本地视频选择、RTSP 推流和保存到本地。
+      </div>
+      <div class="face-lib-dialog-actions">
+        <button class="btn btn-secondary" id="face-lib-guide-close" type="button">关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="face-lib-preview-dialog" id="face-lib-preview-dialog">
+    <div class="face-lib-preview-shell">
+      <div class="face-lib-preview-head">
+        <strong id="face-lib-preview-title">图片预览</strong>
+        <button class="btn btn-secondary" id="face-lib-preview-close" type="button">关闭</button>
+      </div>
+      <img class="face-lib-preview-image" id="face-lib-preview-image" alt="人脸预览">
+    </div>
+  </dialog>
+
+  <script src="/assets/dashboard.js"></script>
+</body>
+</html>

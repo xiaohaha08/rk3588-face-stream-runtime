@@ -1,0 +1,87 @@
+{
+  "source_id": "rtsp-input-rtsp-01",
+  "input": {
+    "kind": "rtsp",
+    "path": "rtsp://127.0.0.1:8554/live/input",
+    "io_backend": "ffmpeg",
+    "ffmpeg_path": "ffmpeg",
+    "ffprobe_path": "ffprobe",
+    "rtsp_transport": "tcp",
+    "decoder": "auto",
+    "ffmpeg_log_level": "warning",
+    "restart_on_eof": true,
+    "restart_backoff_ms": 1200,
+    "convert_to_rgb": true
+  },
+  "frame_store": {
+    "capacity": 64
+  },
+  "scheduler": {
+    "poll_interval_ms": 2
+  },
+  "workers": {
+    "count": 2,
+    "task_timeout_ms": 220,
+    "result_queue_size": 16
+  },
+  "reorder": {
+    "max_wait_ms": 140
+  },
+  "models": {
+    "detector": "models/rk-yolov8n-face-to-rk3588-640x640.rknn",
+    "classifier": "models/ResNet_6face_model_210.onnx-to-rk3588-224x224.rknn",
+    "recognizer": "models/XcFaceNet20241110-to-rk3588-160x160.rknn"
+  },
+  "gallery": {
+    "directory": "gallery",
+    "max_images_per_identity": 10
+  },
+  "tracking": {
+    "iou_threshold": 0.35,
+    "ttl_frames": 20,
+    "recognition_cooldown_frames": 6,
+    "recognizer_core_id": 2,
+    "recognition_queue_size": 8
+  },
+  "output": {
+    "push_queue_size": 8,
+    "sink": "ffmpeg_rtsp",
+    "annotate_failures": true,
+    "stream_url": "rtsp://127.0.0.1:8554/live/rtsp-face-recog",
+    "ffmpeg_path": "ffmpeg",
+    "video_encoder": "h264_rkmpp",
+    "video_bitrate": "4M",
+    "gop": 30,
+    "rtsp_transport": "tcp",
+    "ffmpeg_log_level": "warning",
+    "x264_preset": "ultrafast",
+    "restart_backoff_ms": 1200,
+    "max_restart_attempts": 0
+  },
+  "metrics": {
+    "window_seconds": 5.0,
+    "log_interval_ms": 1000
+  },
+  "mediamtx": {
+    "enabled": true,
+    "auto_start": true,
+    "binary_path": "deploy_assets/linux_arm64/mediamtx/mediamtx",
+    "config_path": "deploy_assets/linux_arm64/mediamtx/mediamtx.yml",
+    "host": "127.0.0.1",
+    "port": 8554,
+    "start_timeout_ms": 5000,
+    "retry_interval_ms": 200
+  },
+  "logging": {
+    "level": "INFO"
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false,
+    "auto_start": true,
+    "enable_websocket": true,
+    "event_buffer_size": 256,
+    "recent_event_limit": 100
+  }
+}
